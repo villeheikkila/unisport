@@ -1,5 +1,5 @@
 const Telegraf = require("telegraf");
-const axios = require("axios");
+import { hearsBulli, weatherHelsinki, unisportHours } from "./actions";
 
 const bot = new Telegraf(process.env.TELEGRAM_TOKEN, {
   webhookReply: false,
@@ -9,20 +9,9 @@ module.exports.webhook = async (event) => {
   try {
     const body = JSON.parse(event.body);
 
-    bot.hears("bulli", ({ reply }) => reply("No bulli!"));
-
-    bot.hears("sää", async ({ reply }) => {
-      try {
-        const response = await axios.get(
-          `https://api.openweathermap.org/data/2.5/weather?q=helsinki&units=metric&appid=${process.env.OPENWEATHER_TOKEN}`
-        );
-        await reply(
-          `The temperature in Helsinki at the moment is ${response.data.main.temp} degrees`
-        );
-      } catch (error) {
-        reply(`Error fetching weather: ${error.message}`);
-      }
-    });
+    bot.hears("bulli", (ctx) => hearsBulli(ctx));
+    bot.command("weather", async (ctx) => weatherHelsinki(ctx));
+    bot.command("unisport", async (ctx) => await unisportHours(ctx));
 
     await bot.handleUpdate(body);
     return { statusCode: 200, body: "" };

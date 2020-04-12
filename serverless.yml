@@ -3,14 +3,9 @@ service:
 app: serverless-tg-bot
 org: villeheikkila
 
-custom:
-  webpack:
-    webpackConfig: ./webpack.config.js
-    includeModules: true
-
 plugins:
-  - serverless-webpack
   - serverless-dotenv-plugin
+  - serverless-plugin-typescript
 
 provider:
   name: aws
@@ -21,6 +16,7 @@ provider:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN}
     OPENWEATHER_TOKEN: ${env:OPENWEATHER_TOKEN}
+    UNISPORT_API: ${env:UNISPORT_API}
 
 functions:
   webhook:

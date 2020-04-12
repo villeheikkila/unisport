@@ -4,3 +4,4 @@ vscode
 .serverless
 .webpack
 .env
+.DS_Store
