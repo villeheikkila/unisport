@@ -1,0 +1,17 @@
+service: unisport-crawler
+app: unisport-crawler
+org: villeheikkila
+
+plugins:
+  - serverless-offline
+  - serverless-plugin-typescript
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+functions:
+  unisport:
+    handler: handler.unisport
+    events:
+      - http: GET unisport
