@@ -1,3 +1,5 @@
+import { wilks, ipf } from "./helpers";
+
 const axios = require("axios");
 
 const locations = [
@@ -9,11 +11,12 @@ const locations = [
   "toolo",
 ];
 
+const splitArgs = (text) => text.match(/^\/([^\s]+)\s?(.+)?/);
+
 export const unisportHours = async ({ reply, update }) => {
   const text = update.message.text.toLowerCase();
-  const match = text.match(/^\/([^\s]+)\s?(.+)?/);
-
-  const arg = match?.length > 1 && match[2];
+  const args = splitArgs(text);
+  const arg = args?.length > 1 && args[2];
 
   const gymIndex = arg ? locations.findIndex((e) => e === arg) : 1;
 
@@ -45,6 +48,46 @@ export const weatherHelsinki = async ({ reply }) => {
     );
   } catch (error) {
     reply(`Error fetching weather: ${error.message}`);
+  }
+};
+
+export const calculateWilks = ({ reply, update }) => {
+  const text = update.message.text.toLowerCase();
+  const args = splitArgs(text);
+
+  if (args.length > 2) {
+    const values = args[2].split(" ");
+
+    reply(
+      `The wilks score at ${values[0]}kg bw and ${values[1]}kg total is ${wilks(
+        values[0],
+        values[1],
+        values[3]
+      ).toFixed(2)}`
+    );
+  } else {
+    reply(`Please provide valid weight and total in kgs`);
+  }
+};
+
+export const calculateIpf = ({ reply, update }) => {
+  const text = update.message.text.toLowerCase();
+  const args = splitArgs(text);
+
+  if (args.length > 2) {
+    const values = args[2].split(" ");
+
+    reply(
+      `The ipf score at ${values[0]}kg bw and ${values[1]}kg total is ${ipf(
+        values[0],
+        values[1],
+        values[2],
+        values[3],
+        values[4]
+      ).toFixed(2)}`
+    );
+  } else {
+    reply(`Please provide valid weight and total in kgs`);
   }
 };
 
