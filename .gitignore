@@ -1,0 +1,6 @@
+node_modules
+jspm_packages
+vscode
+.serverless
+.webpack
+.env
