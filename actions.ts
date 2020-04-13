@@ -61,8 +61,7 @@ export const calculateWilks = ({ reply, update }) => {
     reply(
       `The wilks score at ${values[0]}kg bw and ${values[1]}kg total is ${wilks(
         values[0],
-        values[1],
-        values[3]
+        values[1]
       ).toFixed(2)}`
     );
   } else {
@@ -80,10 +79,7 @@ export const calculateIpf = ({ reply, update }) => {
     reply(
       `The ipf score at ${values[0]}kg bw and ${values[1]}kg total is ${ipf(
         values[0],
-        values[1],
-        values[2],
-        values[3],
-        values[4]
+        values[1]
       ).toFixed(2)}`
     );
   } else {
