@@ -11,24 +11,18 @@ const gyms = [
 
 const mapGymPageToRealName = (unisportNameId: string) => {
   switch (unisportNameId) {
-    case "kluuvi": {
+    case "kluuvi":
       return "Kluuvi";
-    }
-    case "kumpula": {
+    case "kumpula":
       return "Kumpula";
-    }
-    case "meilahti": {
+    case "meilahti":
       return "Meilahti";
-    }
-    case "otaniemi": {
+    case "otaniemi":
       return "Otaniemi";
-    }
-    case "toolo": {
+    case "toolo":
       return "Töölö";
-    }
-    default: {
+    default:
       return "";
-    }
   }
 };
 
@@ -42,13 +36,14 @@ enum Dividers {
   SingleDay = " ",
 }
 
-type mmHH = {
-  hours: number;
-  mins: number;
+type HourMinute = {
+  hour: number;
+  minute: number;
 };
+
 type Range = {
-  opens: mmHH;
-  closes: mmHH;
+  opens: HourMinute;
+  closes: HourMinute;
 };
 type WeekType = {
   monday: null | Range;
@@ -58,6 +53,95 @@ type WeekType = {
   friday: null | Range;
   saturday: null | Range;
   sunday: null | Range;
+};
+
+const parseTimeRange = (str: string): [HourMinute, HourMinute] => {
+  const [start, end] = str.split("-").map((hoursMins) => {
+    const [hour, minute] = hoursMins
+      .split(".")
+      .map((value) => parseInt(value, 10));
+    return { hour, minute };
+  });
+
+  return [start, end];
+};
+
+const findAllOccurrences = (str: string, search: string) =>
+  [...str.matchAll(new RegExp(search, "gi"))]
+    .map(({ index }) => index)
+    .flatMap((index) => (index ? [index] : []));
+
+const unifyDayRangeSeparators = (str: string) =>
+  str.replace("\u2013", Dividers.DayRange);
+
+const parseOpeningHours = (rawString: string) => {
+  const stringTillBreak = unifyDayRangeSeparators(rawString);
+
+  const openingHours: WeekType = {
+    monday: null,
+    tuesday: null,
+    wednesday: null,
+    thursday: null,
+    friday: null,
+    saturday: null,
+    sunday: null,
+  };
+
+  const mapShortToLongDay: Record<string, keyof typeof openingHours> = {
+    ma: "monday",
+    ti: "tuesday",
+    ke: "wednesday",
+    to: "thursday",
+    pe: "friday",
+    la: "saturday",
+    su: "sunday",
+  };
+
+  const lastPos = stringTillBreak.length;
+  let position = 0;
+  let dayIndex = 0;
+
+  while (position < lastPos && dayIndex < days.length) {
+    const indicesOfFoundDayString = findAllOccurrences(
+      stringTillBreak,
+      days[dayIndex]
+    );
+
+    const positionOfNextDay = indicesOfFoundDayString.find(
+      (i) => i >= position
+    );
+    if (!positionOfNextDay) break;
+
+    position = positionOfNextDay + days[dayIndex].length;
+
+    const divider = stringTillBreak.substring(position, ++position);
+
+    const [opens, closes] = parseTimeRange(
+      stringTillBreak.substring(position, position + 10)
+    );
+
+    if (divider === Dividers.SingleDay) {
+      openingHours[mapShortToLongDay[days[dayIndex]]] = { opens, closes };
+      dayIndex++;
+    } else if (divider === Dividers.DayRange) {
+      const lastDay = stringTillBreak.substring(position, position + 2);
+      const indexOfLastDayInRange = days.indexOf(lastDay.toLocaleLowerCase());
+
+      const [opens, closes] = parseTimeRange(
+        stringTillBreak.substring(position + 3, position + 13)
+      );
+
+      Array.from({ length: indexOfLastDayInRange - dayIndex + 1 })
+        .map((_, i) => i + dayIndex)
+        .forEach((n) => {
+          openingHours[mapShortToLongDay[days[n]]] = { opens, closes };
+        });
+
+      dayIndex = indexOfLastDayInRange + 1;
+    }
+  }
+
+  return openingHours;
 };
 
 const getOpeningHoursHTMLBlock = async (
@@ -75,92 +159,17 @@ const getOpeningHoursHTMLBlock = async (
   }
 };
 
-const parseTimeRange = (str: string) =>
-  str.split("-").map((d) => {
-    const [hours, mins] = d.split(".").map((v) => parseInt(v, 10));
-    return { hours, mins };
-  });
-
-const parseOpeningHours = (rawString: string) => {
-  const stringTillBreak = rawString
-    .substring(rawString.search("Aukioloajat"))
-    .replace("\u2013", Dividers.DayRange);
-
-  const openingHours: WeekType = {
-    monday: null,
-    tuesday: null,
-    wednesday: null,
-    thursday: null,
-    friday: null,
-    saturday: null,
-    sunday: null,
-  };
-
-  const mapToName: Record<string, keyof typeof openingHours> = {
-    ma: "monday",
-    ti: "tuesday",
-    ke: "wednesday",
-    to: "thursday",
-    pe: "friday",
-    la: "saturday",
-    su: "sunday",
-  };
-
-  const lastPos = stringTillBreak.length;
-  let position = 0;
-  let dayIndex = 0;
-
-  while (position < lastPos && dayIndex < days.length) {
-    const indicesOfToken = [
-      ...stringTillBreak.matchAll(new RegExp(days[dayIndex], "gi")),
-    ]
-      .map(({ index }) => index)
-      .flatMap((index) => (index ? [index] : []));
-
-    const posOfNextToken = indicesOfToken.find((i) => i >= position);
-    if (!posOfNextToken) break;
-
-    position = posOfNextToken + days[dayIndex].length;
-
-    const divider = stringTillBreak.substring(position, ++position);
-
-    const [opens, closes] = parseTimeRange(
-      stringTillBreak.substring(position, position + 10)
-    );
-
-    if (divider === Dividers.SingleDay) {
-      openingHours[mapToName[days[dayIndex]]] = { opens, closes };
-      dayIndex++;
-    } else if (divider === Dividers.DayRange) {
-      const lastDay = stringTillBreak.substring(position, position + 2);
-      const indexOfLastDayInRange = days.indexOf(lastDay.toLocaleLowerCase());
-
-      const [opens, closes] = parseTimeRange(
-        stringTillBreak.substring(position + 3, position + 13)
-      );
-
-      Array.from({ length: indexOfLastDayInRange - dayIndex + 1 })
-        .map((_, i) => i + dayIndex)
-        .forEach((n) => {
-          openingHours[mapToName[days[n]]] = { opens, closes };
-        });
-
-      dayIndex = indexOfLastDayInRange + 1;
-    }
-  }
-
-  return openingHours;
-};
-
 try {
   const urls = gyms.map((g) => baseUrl + gymPagePrefix + g);
   const pages = await Promise.all(urls.map((u) => getOpeningHoursHTMLBlock(u)));
 
   const openingHours = await Promise.all(
-    pages.map((p, i) => ({
-      location: mapGymPageToRealName(gyms[i]),
-      openingHours: parseOpeningHours(p as any),
-    }))
+    pages
+      .flatMap((p) => (p ? [p.substring(p.search("Aukioloajat"))] : []))
+      .map((p, i) => ({
+        location: mapGymPageToRealName(gyms[i]),
+        openingHours: parseOpeningHours(p),
+      }))
   );
 
   console.log(JSON.stringify(openingHours, null, 4));
