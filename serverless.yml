@@ -1,0 +1,26 @@
+service:
+  name: serverless-tg-bot
+app: serverless-tg-bot
+org: villeheikkila
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-plugin-typescript
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  apiGateway:
+    minimumCompressionSize: 1024
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    TELEGRAM_TOKEN: ${env:TELEGRAM_TOKEN}
+    OPENWEATHER_TOKEN: ${env:OPENWEATHER_TOKEN}
+    UNISPORT_API: ${env:UNISPORT_API}
+
+functions:
+  webhook:
+    handler: handler.webhook
+    timeout: 30
+    events:
+      - http: POST /webhook
