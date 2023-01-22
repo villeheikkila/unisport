@@ -5,3 +5,5 @@ vscode
 .webpack
 .env
 .DS_Store
+.serverless
+.build
