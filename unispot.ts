@@ -45,6 +45,7 @@ type Range = {
   opens: HourMinute;
   closes: HourMinute;
 };
+
 type WeekType = {
   monday: null | Range;
   tuesday: null | Range;
